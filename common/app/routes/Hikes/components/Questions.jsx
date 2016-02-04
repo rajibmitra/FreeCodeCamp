@@ -10,6 +10,7 @@ import {
   releaseQuestion,
   grabQuestion
 } from '../redux/actions';
+import { getCurrentHike } from '../redux/selectors';
 
 const answerThreshold = 100;
 const actionsToBind = {
@@ -20,11 +21,10 @@ const actionsToBind = {
 };
 
 const mapStateToProps = createSelector(
-  state => state.hikesApp.hikes.entities,
-  state => state.hikesApp.hikes.results,
+  getCurrentHike,
   state => state.hikesApp,
   state => state.app.isSignedIn,
-  (hikesMap, hikesByDashname, ui, isSignedIn) => {
+  (currentHike, ui, isSignedIn) => {
     const {
       currentQuestion = 1,
       mouse = [ 0, 0 ],
@@ -34,7 +34,12 @@ const mapStateToProps = createSelector(
       shouldShakeQuestion = false
     } = ui;
 
+    const {
+      tests = []
+    } = currentHike;
+
     return {
+      tests,
       currentQuestion,
       isCorrect,
       mouse,
@@ -138,7 +143,7 @@ class Question extends React.Component {
   render() {
     const {
       tests = [],
-      mouse: [x],
+      mouse: [xPosition],
       currentQuestion,
       shouldShakeQuestion
     } = this.props;
@@ -158,7 +163,7 @@ class Question extends React.Component {
         xs={ 8 }
         xsOffset={ 2 }>
         <Row>
-          <Motion style={{ x: spring(x, [120, 10]) }}>
+          <Motion style={{ x: spring(xPosition, [120, 10]) }}>
             { questionElement }
           </Motion>
           <div className='spacer' />
