@@ -21,6 +21,7 @@ import {
 } from '../utils/middleware';
 
 import getFromDisk$ from '../utils/getFromDisk$';
+import supportedLanguages from '../utils/supported-languages';
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isBeta = !!process.env.BETA;
@@ -224,7 +225,7 @@ function getSuperBlocks$(challenge$, completedChallenges) {
       const isRequired = _.every(blockArray, 'isRequired');
 
       blockArray = blockArray.map(challenge => {
-        if (challenge.challengeType == 6 && challenge.type === 'hike') {
+        if (challenge.type === 'hike') {
           challenge.url = '/videos/' + challenge.dashedName;
         } else {
           challenge.url = '/challenges/' + challenge.dashedName;
@@ -411,13 +412,13 @@ module.exports = function(app) {
     redirectToCurrentChallenge
   );
   router.get(
-    '/challenges/next-challenge',
+    'en/challenges/next-challenge',
     redirectToNextChallenge
   );
 
   router.get('/challenges/:challengeName', showChallenge);
 
-  app.use(router);
+  app.use('/:lang', router);
 
   function redirectToCurrentChallenge(req, res, next) {
     let challengeId = req.query.id || req.cookies.currentChallengeId;
@@ -485,8 +486,52 @@ module.exports = function(app) {
   function showChallenge(req, res, next) {
     const solution = req.query.solution;
     const challengeName = req.params.challengeName.replace(challengesRegex, '');
+    let browserLanguage;
 
-    getRenderData$(req.user, challenge$, challengeName, solution)
+    if (req.lang) {
+      browserLanguage = req.lang;
+    } else {
+      browserLanguage = 'en';
+    }
+
+    getRenderData$(
+      req.user,
+      challenge$,
+      challengeName,
+      solution
+    )
+      .map(data => {
+
+        if (
+          browserLanguage === 'en' ||
+          !data.data ||
+          !supportedLanguages[browserLanguage]
+        ) {
+          return data;
+        }
+
+        // find language titles and descriptions
+        const oldLocals = data.data;
+        const maybeTitle = oldLocals[`title${_.capitalize(browserLanguage)}`] ||
+          oldLocals[`name${_.capitalize(browserLanguage)}`];
+
+        const maybeDescription =
+          oldLocals[`description${_.capitalize(browserLanguage)}`];
+
+        // both title and description must be avaiable
+        if (!maybeDescription || !maybeTitle) {
+          return data;
+        }
+
+        return {
+          ...data,
+          data: {
+            ...oldLocals,
+            name: maybeTitle,
+            description: maybeDescription
+          }
+        };
+      })
       .subscribe(
         ({ type, redirectUrl, message, data }) => {
           if (message) {
@@ -502,7 +547,7 @@ module.exports = function(app) {
           if (data.id) {
             res.cookie('currentChallengeId', data.id);
           }
-          res.render(view, data);
+          return res.render(view, data);
         },
         next,
         function() {}

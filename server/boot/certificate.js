@@ -87,7 +87,7 @@ export default function certificate(app) {
     postHonest
   );
 
-  app.use(router);
+  app.use('/:lang', router);
 
   function verifyCert(certType, req, res, next) {
     Observable.just({})

@@ -9,27 +9,36 @@ var Rx = require('rx'),
     secrets = require('../../config/secrets');
 
 module.exports = function(app) {
+  var rootRouter = app.loopback.Router();
   var router = app.loopback.Router();
   var User = app.models.User;
   var Challenge = app.models.Challenge;
   var Story = app.models.Story;
   var Nonprofit = app.models.Nonprofit;
 
-  router.get('/api/github', githubCalls);
-  router.get('/api/blogger', bloggerCalls);
-  router.get('/api/trello', trelloCalls);
-  router.get('/sitemap.xml', sitemap);
-  router.get('/chat', chat);
-  router.get('/coding-bootcamp-cost-calculator', bootcampCalculator);
-  router.get('/twitch', twitch);
-  router.get('/pmi-acp-agile-project-managers', agileProjectManagers);
-  router.get('/pmi-acp-agile-project-managers-form', agileProjectManagersForm);
+  rootRouter.get('/api/github', githubCalls);
+  rootRouter.get('/api/blogger', bloggerCalls);
+  rootRouter.get('/api/trello', trelloCalls);
+  rootRouter.get('/sitemap.xml', sitemap);
+  rootRouter.get('/chat', chat);
+  rootRouter.get('/coding-bootcamp-cost-calculator', bootcampCalculator);
+  rootRouter.get('/twitch', twitch);
+  rootRouter.get('/pmi-acp-agile-project-managers', agileProjectManagers);
+  rootRouter.get(
+    '/pmi-acp-agile-project-managers-form',
+    agileProjectManagersForm
+  );
+  rootRouter.get('/nonprofits-form', nonprofitsForm);
+  rootRouter.get('/unsubscribe/:email', unsubscribe);
+  rootRouter.get('/unsubscribed', unsubscribed);
+  rootRouter.get('/submit-cat-photo', submitCatPhoto);
+  rootRouter.get(
+    '/the-fastest-web-page-on-the-internet',
+    theFastestWebPageOnTheInternet
+  );
+
   router.get('/nonprofits', nonprofits);
-  router.get('/nonprofits-form', nonprofitsForm);
-  router.get('/unsubscribe/:email', unsubscribe);
-  router.get('/unsubscribed', unsubscribed);
   router.get('/get-started', getStarted);
-  router.get('/submit-cat-photo', submitCatPhoto);
   router.get('/labs', showLabs);
   router.get('/stories', showTestimonials);
   router.get('/shop', showShop);
@@ -37,12 +46,9 @@ module.exports = function(app) {
   router.get('/terms', terms);
   router.get('/privacy', privacy);
   router.get('/code-of-conduct', codeOfConduct);
-  router.get(
-    '/the-fastest-web-page-on-the-internet',
-    theFastestWebPageOnTheInternet
-  );
 
-  app.use(router);
+  app.use(rootRouter);
+  app.use('/:lang', router);
 
   function sitemap(req, res, next) {
     var appUrl = 'http://www.freecodecamp.com';

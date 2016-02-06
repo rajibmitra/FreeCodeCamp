@@ -125,7 +125,7 @@ module.exports = function(app) {
 
   router.get('/:username', returnUser);
 
-  app.use(router);
+  app.use('/:lang', router);
 
   function getSignin(req, res) {
     if (req.user) {
@@ -166,7 +166,6 @@ module.exports = function(app) {
 
   function returnUser(req, res, next) {
     const username = req.params.username.toLowerCase();
-    const { path } = req;
     User.findOne(
       {
         where: { username },
@@ -177,11 +176,7 @@ module.exports = function(app) {
           return next(err);
         }
         if (!profileUser) {
-          req.flash('errors', {
-            msg: `404: We couldn't find path ${ path }`
-          });
-          console.log('404');
-          return res.redirect('/');
+          return next();
         }
         profileUser = profileUser.toJSON();
 
